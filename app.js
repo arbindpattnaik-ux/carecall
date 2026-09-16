@@ -14,6 +14,15 @@ const DEFAULT_ADMIN = {
   assignedGroups: []
 };
 
+const ARBIND_ADMIN = {
+  id: 'admin-arbind',
+  fullName: 'Arbind',
+  username: 'arbind',
+  password: 'arbind',
+  role: 'admin',
+  assignedGroups: []
+};
+
 const seedData = {
   users: [DEFAULT_ADMIN],
   groups: [
@@ -128,7 +137,12 @@ const generateStudentId = () => `s${Date.now()}${Math.random().toString(16).slic
 
 const ensureStorage = () => {
   if (!localStorage.getItem(STORAGE_KEYS.users)) {
-    saveUsers(seedData.users);
+    saveUsers([...seedData.users, ARBIND_ADMIN]);
+  } else {
+    const users = getUsers();
+    if (!users.some(user => user.username === ARBIND_ADMIN.username)) {
+      saveUsers([...users, ARBIND_ADMIN]);
+    }
   }
   if (!localStorage.getItem(STORAGE_KEYS.groups)) {
     saveGroups(seedData.groups);
