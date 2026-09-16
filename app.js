@@ -5,6 +5,10 @@ const STORAGE_KEYS = {
   callLogs: 'carecall_call_logs'
 };
 
+const API_BASE = '/api';
+let databaseConnected = false;
+let syncTimer = null;
+
 const DEFAULT_ADMIN = {
   id: 'admin',
   fullName: 'Administrator',
@@ -56,10 +60,56 @@ const getCallLogs = () => readStorage(STORAGE_KEYS.callLogs, seedData.callLogs);
 
 const getTeacherOptions = () => getUsers().filter(user => user.role === 'teacher');
 
-const saveUsers = users => writeStorage(STORAGE_KEYS.users, users);
-const saveGroups = groups => writeStorage(STORAGE_KEYS.groups, groups);
-const saveStudents = students => writeStorage(STORAGE_KEYS.students, students);
-const saveCallLogs = logs => writeStorage(STORAGE_KEYS.callLogs, logs);
+const apiRequest = async (path, options = {}) => {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    ...options
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+};
+
+const queueDatabaseSync = () => {
+  if (!databaseConnected) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await apiRequest('/snapshot', {
+        method: 'PUT',
+        body: JSON.stringify({ users: getUsers(), groups: getGroups(), students: getStudents(), callLogs: getCallLogs() })
+      });
+    } catch (error) {
+      databaseConnected = false;
+      showToast('Database connection lost; changes saved locally');
+    }
+  }, 250);
+};
+
+const saveUsers = users => { writeStorage(STORAGE_KEYS.users, users); queueDatabaseSync(); };
+const saveGroups = groups => { writeStorage(STORAGE_KEYS.groups, groups); queueDatabaseSync(); };
+const saveStudents = students => { writeStorage(STORAGE_KEYS.students, students); queueDatabaseSync(); };
+const saveCallLogs = logs => { writeStorage(STORAGE_KEYS.callLogs, logs); queueDatabaseSync(); };
+
+async function hydrateFromDatabase() {
+  try {
+    const remote = await apiRequest('/bootstrap');
+    const hasRemoteData = remote.users.length || remote.groups.length || remote.students.length || remote.callLogs.length;
+    if (hasRemoteData) {
+      writeStorage(STORAGE_KEYS.users, remote.users);
+      writeStorage(STORAGE_KEYS.groups, remote.groups);
+      writeStorage(STORAGE_KEYS.students, remote.students);
+      writeStorage(STORAGE_KEYS.callLogs, remote.callLogs);
+    } else {
+      await apiRequest('/snapshot', {
+        method: 'PUT',
+        body: JSON.stringify({ users: getUsers(), groups: getGroups(), students: getStudents(), callLogs: getCallLogs() })
+      });
+    }
+    databaseConnected = true;
+  } catch (error) {
+    databaseConnected = false;
+  }
+}
 
 const currentUser = () => {
   const username = sessionStorage.getItem('carecall_current_user');
@@ -826,11 +876,12 @@ function handleManualStudentCreation(event) {
   showToast('Parent record saved and assigned to teacher');
 }
 
-function init() {
+async function init() {
   ensureStorage();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+  await hydrateFromDatabase();
   const loginForm = document.getElementById('login-form');
   loginForm?.addEventListener('submit', event => {
     event.preventDefault();
