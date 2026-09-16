@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareCall</title>
+    <meta name="theme-color" content="#132c27" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CareCall" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/icon-192.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f7f6;
+        color: #132c27;
+      }
+      .hidden { display: none !important; }
+      .auth-screen {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #eafaf3 0%, #edf5ff 100%);
+      }
+      .auth-card {
+        width: min(440px, 92vw);
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 22px 60px rgba(20, 60, 50, 0.12);
+        padding: 32px 28px;
+      }
+      .auth-card h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+      }
+      .auth-card p {
+        margin: 0 0 24px;
+        color: #56706c;
+      }
+      .auth-card form {
+        display: grid;
+        gap: 14px;
+      }
+      .auth-card input,
+      .auth-card select,
+      .auth-card textarea,
+      .auth-card button {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid #d2e1db;
+        padding: 12px 14px;
+        font: inherit;
+      }
+      .auth-card button,
+      .panel button,
+      .primary-btn,
+      .secondary-btn,
+      .danger-btn {
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .primary-btn {
+        background: #1b8a6b;
+        border: 0;
+        color: white;
+      }
+      .secondary-btn {
+        background: #eef5f3;
+        border: 1px solid #d5e2df;
+        color: #143d36;
+      }
+      .danger-btn {
+        background: #ffe6e3;
+        border: 1px solid #f3b4aa;
+        color: #9a3b35;
+      }
+      #app-shell {
+        display: flex;
+        min-height: 100vh;
+      }
+      .sidebar {
+        width: 260px;
+        background: #f9fbfa;
+        border-right: 1px solid #dfe9e5;
+        padding: 18px 16px 20px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 1.7rem;
+        padding: 6px 8px 18px;
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #d7f3ea;
+        color: #147b60;
+      }
+      .sidebar-nav {
+        display: grid;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .nav-button {
+        text-align: left;
+        padding: 12px 14px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: transparent;
+        color: #38514d;
+        font-size: 0.98rem;
+        font-weight: 700;
+      }
+      .nav-button.active {
+        background: #e4f7f0;
+        border-color: #bfe8da;
+        color: #145c4d;
+      }
+      .main-area {
+        flex: 1;
+        padding: 26px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .welcome {
+        font-size: 0.87rem;
+        color: #5a7c74;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .topbar h2 {
+        margin: 6px 0 0;
+        font-size: 2rem;
+      }
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        border: 1px solid #dfe9e5;
+        border-radius: 999px;
+        padding: 8px 12px;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #d9f2ea;
+        color: #154f44;
+        font-weight: 700;
+      }
+      .dashboard {
+        display: grid;
+        gap: 20px;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(180px, 1fr));
+        gap: 18px;
+      }
+      .panel {
+        background: white;
+        border: 1px solid #dfe9e5;
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 10px 28px rgba(23, 45, 39, 0.04);
+      }
+      .stat-card {
+        background: #fff;
+      }
+      .stat-card h3 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+      .stat-card p {
+        margin: 8px 0 0;
+        color: #536b66;
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .panel-header h3 {
+        margin: 0;
+      }
+      .small-muted {
+        color: #5d726d;
+        font-size: 0.9rem;
+      }
+      .toolbar,
+      .row-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: end;
+      }
+      .toolbar input,
+      .toolbar select,
+      .row-form input,
+      .row-form select,
+      .row-form textarea {
+        border: 1px solid #d8e4e1;
+        border-radius: 10px;
+        background: white;
+        padding: 10px 12px;
+        font: inherit;
+      }
+      .toolbar {
+        margin: 10px 0 18px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 12px 10px;
+        text-align: left;
+        border-bottom: 1px solid #edf0ef;
+        vertical-align: top;
+      }
+      th {
+        color: #5d726d;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .tag {
+        display: inline-block;
+        padding: 6px 9px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      .tag.green { background: #eaf9f2; color: #177d5a; }
+      .tag.orange { background: #fff2de; color: #a66000; }
+      .tag.blue { background: #edf4ff; color: #1c5fcf; }
+      .action-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .action-row button {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #dfe9e5;
+        background: white;
+        font-weight: 700;
+      }
+      .stack {
+        display: grid;
+        gap: 10px;
+      }
+      .inline-label {
+        display: grid;
+        gap: 6px;
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .upload-box {
+        border: 2px dashed #bfd8d1;
+        border-radius: 14px;
+        background: #f8fbfa;
+        padding: 22px;
+        text-align: center;
+      }
+      .upload-box input {
+        margin-top: 12px;
+      }
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        background: #163d36;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 20px 32px rgba(13, 31, 27, 0.2);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (max-width: 900px) {
+        #app-shell { display: block; }
+        .sidebar { width: 100%; }
+        .stats-grid, .two-col { grid-template-columns: 1fr; }
+        .main-area { padding: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login-screen" class="auth-screen">
+      <div class="auth-card">
+        <h1>CareCall</h1>
+        <p>Admin and teacher access for student follow-up calls.</p>
+        <form id="login-form">
+          <input type="text" id="login-username" placeholder="Username" required />
+          <input type="password" id="login-password" placeholder="Password" required />
+          <button type="submit" class="primary-btn">Log in</button>
+        </form>
+        <p class="small-muted" style="margin-top:16px;">Default admin: admin / admin123</p>
+      </div>
+    </div>
+
+    <div id="app-shell" class="hidden">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">✦</span>CareCall</div>
+        <nav id="nav" class="sidebar-nav"></nav>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div>
+            <div class="welcome" id="welcome-label">Dashboard</div>
+            <h2 id="page-title">Overview</h2>
+          </div>
+          <div class="topbar-actions">
+            <div class="user-pill">
+              <span class="avatar" id="user-avatar">A</span>
+              <div>
+                <strong id="user-name">Admin</strong><br>
+                <small id="user-role" class="small-muted">Administrator</small>
+              </div>
+            </div>
+            <button id="logout-btn" class="secondary-btn" style="padding:10px 14px;">Logout</button>
+          </div>
+        </header>
+
+        <div id="admin-dashboard" class="dashboard hidden">
+          <section class="stats-grid">
+            <div class="panel stat-card">
+              <p class="small-muted">Total students</p>
+              <h3 id="total-students">0</h3>
+            </div>
+            <div class="panel stat-card">
+              <p class="small-muted">Class groups</p>
+              <h3 id="total-groups">0</h3>
+            </div>
+            <div class="panel stat-card">
+              <p class="small-muted">Teachers</p>
+              <h3 id="total-teachers">0</h3>
+            </div>
+            <div class="panel stat-card">
+              <p class="small-muted">Call logs</p>
+              <h3 id="total-calls">0</h3>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Manage class, section and group</h3>
+              <button id="add-group-btn" class="primary-btn" style="padding:10px 14px;">Add group</button>
+            </div>
+            <form id="group-form" class="row-form">
+              <div class="inline-label">
+                <label>Class</label>
+                <input name="className" placeholder="Example: Class 5" required />
+              </div>
+              <div class="inline-label">
+                <label>Section</label>
+                <input name="sectionName" placeholder="Example: A" required />
+              </div>
+              <div class="inline-label">
+                <label>Group</label>
+                <input name="groupName" placeholder="Example: Group Red" required />
+              </div>
+              <button type="submit" class="primary-btn" style="padding:12px 18px;">Save</button>
+            </form>
+            <div id="groups-table-wrap" style="margin-top:18px;"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Manually add parent details</h3>
+            </div>
+            <form id="manual-student-form" class="stack">
+              <div class="row-form">
+                <div class="inline-label">
+                  <label>Student name</label>
+                  <input name="studentName" required />
+                </div>
+                <div class="inline-label">
+                  <label>Class</label>
+                  <select name="className" id="manual-class" required></select>
+                </div>
+              </div>
+              <div class="row-form">
+                <div class="inline-label">
+                  <label>Section</label>
+                  <select name="sectionName" id="manual-section" required></select>
+                </div>
+                <div class="inline-label">
+                  <label>Group</label>
+                  <select name="groupId" id="manual-group" required></select>
+                </div>
+              </div>
+              <div class="row-form">
+                <div class="inline-label">
+                  <label>Father name</label>
+                  <input name="fatherName" required />
+                </div>
+                <div class="inline-label">
+                  <label>Father mobile</label>
+                  <input name="fatherMobile" required />
+                </div>
+              </div>
+              <div class="row-form">
+                <div class="inline-label">
+                  <label>Mother name</label>
+                  <input name="motherName" />
+                </div>
+                <div class="inline-label">
+                  <label>Mother mobile</label>
+                  <input name="motherMobile" />
+                </div>
+              </div>
+              <div class="row-form">
+                <div class="inline-label">
+                  <label>Guardian name</label>
+                  <input name="guardianName" />
+                </div>
+                <div class="inline-label">
+                  <label>Guardian mobile</label>
+                  <input name="guardianMobile" />
+                </div>
+              </div>
+              <div class="row-form">
+                <div class="inline-label">
+                  <label>City</label>
+                  <input name="cityOfResidence" />
+                </div>
+                <div class="inline-label">
+                  <label>Assign teacher</label>
+                  <select name="teacherId" id="manual-teacher" required></select>
+                </div>
+              </div>
+              <button type="submit" class="primary-btn" style="padding:12px 18px;">Save parent record</button>
+            </form>
+          </section>
+
+          <section class="two-col">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Teacher access</h3>
+                <button id="add-teacher-btn" class="primary-btn" style="padding:10px 14px;">Add teacher</button>
+              </div>
+              <form id="teacher-form" class="stack hidden">
+                <div class="inline-label">
+                  <label>Teacher name</label>
+                  <input name="fullName" required />
+                </div>
+                <div class="inline-label">
+                  <label>Username</label>
+                  <input name="username" required />
+                </div>
+                <div class="inline-label">
+                  <label>Password</label>
+                  <input name="password" type="password" required />
+                </div>
+                <div class="inline-label">
+                  <label>Assign group(s)</label>
+                  <select name="assignedGroupIds" multiple size="6" id="teacher-group-select"></select>
+                </div>
+                <div class="action-row">
+                  <button type="submit" class="primary-btn">Create teacher</button>
+                  <button type="button" id="cancel-teacher-form" class="secondary-btn">Cancel</button>
+                </div>
+              </form>
+              <div id="teacher-table-wrap"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>CSV student import</h3>
+                <button id="download-template-btn" class="secondary-btn" style="padding:10px 14px;">Download sample CSV</button>
+              </div>
+              <form id="csv-import-form" class="stack">
+                <div class="row-form">
+                  <div class="inline-label">
+                    <label>Class</label>
+                    <select id="import-class" required></select>
+                  </div>
+                  <div class="inline-label">
+                    <label>Section</label>
+                    <select id="import-section" required></select>
+                  </div>
+                  <div class="inline-label">
+                    <label>Group</label>
+                    <select id="import-group" required></select>
+                  </div>
+                </div>
+                <label class="upload-box">
+                  <strong>Choose CSV file</strong><br />
+                  <span class="small-muted">Columns: sno, studentname, fathername, fathermobile, mothername, mothermobile, guardianname, guardian mobile, email, cityofresidence</span>
+                  <input type="file" id="csv-file-input" accept=".csv" />
+                </label>
+                <button type="button" id="upload-csv-btn" class="primary-btn" style="padding:12px 18px;">Upload CSV to database</button>
+              </form>
+              <div id="csv-import-result" class="small-muted" style="margin-top:12px;"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Call logs</h3>
+              <button id="export-call-logs-btn" class="secondary-btn" style="padding:10px 14px;">Download CSV</button>
+            </div>
+            <div id="call-log-table-wrap"></div>
+          </section>
+        </div>
+
+        <div id="teacher-dashboard" class="dashboard hidden">
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Assigned students</h3>
+              <button id="teacher-export-btn" class="secondary-btn" style="padding:10px 14px;">Export my call logs</button>
+            </div>
+            <div id="teacher-student-table-wrap"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
